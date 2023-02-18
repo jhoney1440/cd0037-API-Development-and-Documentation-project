@@ -4,10 +4,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import json
 
-database_name = 'trivia'
-database_path = "postgresql://{}:{}@{}/{}".format(
-    "postgres1", "postgres1", "localhost:5433", database_name
-)
+
+DB_HOST = os.getenv('DB_HOST', 'localhost:5433')  
+DB_USER = os.getenv('DB_USER', 'postgres1')  
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres1')  
+DB_NAME = os.getenv('DB_NAME', 'trivia')  
+database_path = 'postgresql://{}:{}@{}/{}'.format(DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
 
 db = SQLAlchemy()
 

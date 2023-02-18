@@ -58,7 +58,68 @@ These are the files you'd want to edit in the backend:
 One note before you delve into your tasks: for each endpoint, you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior.
 
 1. Use Flask-CORS to enable cross-domain requests and set response headers.
+## CORS - Used for cross origin Resource Sharing
+So, the following code has added to enable cors in this API
+1. `from flask_cors import CORS`
+2. `CORS(app)`
+3. `cors = CORS(app, resources={r"/api/*": {"origins": "*"}})`
+
+
 2. Create an endpoint to handle `GET` requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories.
+
+## Loading Questions from Database with Pagination
+
+```@app.route('/questions', methods=['GET'])
+     def get_questions():
+        #Getting Page Number
+        page = request.args.get('page', 1, type=int)
+        #SQLalchemy Function to get paginated record
+        questions = Question.query.paginate(page=page, per_page=10)
+        question_list = []
+        #Getting all questions in one list
+        for question in questions:
+            question_list.append({'id': question.id, 'question': question.question, 'category':question.category, 'difficulty':question.difficulty, 'answer': question.answer})
+
+        categories = {}
+        #Get all categories from the database
+        categories_result = Category.query.all() 
+
+        #Making the required Formate to display on frontend
+        for i in categories_result:
+            categories[i.id] = i.type
+        
+        #Final JSON format to return to fronend.
+        return jsonify({
+            'questions': question_list,
+            'total_pages': questions.pages,
+            'total_questions': questions.total,
+            'categories': categories,
+            'current_category': '1',
+            'success': True
+        }) ```
+The above endPoint will return the following json
+```
+{
+    'questions': [
+        {
+            'id': 1,
+            'question': 'This is a question',
+            'answer': 'This is an answer',
+            'difficulty': 5,
+            'category': 2
+        },
+    ],
+    'totalQuestions': 100,
+    'categories': { '1' : "Science",
+    '2' : "Art",
+    '3' : "Geography",
+    '4' : "History",
+    '5' : "Entertainment",
+    '6' : "Sports" },
+    'currentCategory': 'History'
+}
+```
+
 3. Create an endpoint to handle `GET` requests for all available categories.
 4. Create an endpoint to `DELETE` a question using a question `ID`.
 5. Create an endpoint to `POST` a new question, which will require the question and answer text, category, and difficulty score.
