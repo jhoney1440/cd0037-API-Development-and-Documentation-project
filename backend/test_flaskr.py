@@ -41,6 +41,30 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], True)
         self.assertTrue(data["categories"])
 
+
+    def test_questions_bad_req(self):
+        res = self.client().get('/questions?page=500')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'Bad request')
+
+    def test_questions_in_category(self):
+        res = self.client().get('/categories/2/questions')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertNotEqual(len(data['questions']), 0)
+        self.assertEqual(data['current_category'], 'Art')
+
+    def test_questions_in_category_notfound(self):
+        res = self.client().get('/categories/100/questions')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'No Category Found')
+
+
     def test_search(self):
         search = {'searchTerm': 'discov', }
         res = self.client().post('/search', json=search)
@@ -49,11 +73,28 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(len(data['questions']), 10)
 
+    def test_search_notfound(self):
+        search = {
+            'searchTerm': 'testtest test test',
+        }
+        res = self.client().post('/search', json=search)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'No Record Found')
+
     def test_delete(self):
         res = self.client().delete('/questions/1')
         data = json.loads(res.data)
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data["success"], True)
+
+    def test_delete_question_notfound(self):
+        res = self.client().delete('/questions/600')
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["message"], "No Record Found")
 
     def test_add_question(self):
         question = {
@@ -80,6 +121,19 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertEqual(data['question']['category'], '1')
+
+    def test_quiz_not_found_category(self):
+        quiz = {
+            'previous_questions': [2],
+            'quiz_category': {
+                'type': 'EEE',
+                'id': 'V'
+            }
+        }
+        res = self.client().post('/quizzes', json=quiz)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
